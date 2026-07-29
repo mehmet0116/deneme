@@ -15,8 +15,7 @@ import android.util.Base64;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowInsets;
-import android.view.WindowInsetsController;
+import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -31,15 +30,17 @@ public class MainActivity extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setStatusBarColor(Color.rgb(247, 126, 174));
         getWindow().setNavigationBarColor(Color.rgb(90, 47, 127));
-        if (android.os.Build.VERSION.SDK_INT >= 30) {
-            WindowInsetsController controller = getWindow().getInsetsController();
-            if (controller != null) {
-                controller.setSystemBarsAppearance(
-                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
-                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
-            }
+        try {
+            setContentView(new CandyGameView());
+        } catch (Throwable error) {
+            TextView fallback = new TextView(this);
+            fallback.setText("Oyun baslatilamadi.\nHata: " + error.getClass().getSimpleName());
+            fallback.setTextSize(18);
+            fallback.setTextColor(Color.rgb(90, 47, 127));
+            fallback.setGravity(android.view.Gravity.CENTER);
+            fallback.setBackgroundColor(Color.rgb(255, 225, 237));
+            setContentView(fallback);
         }
-        setContentView(new CandyGameView());
     }
 
     private final class CandyGameView extends View {
@@ -80,7 +81,6 @@ public class MainActivity extends Activity {
 
         CandyGameView() {
             super(MainActivity.this);
-            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
             text.setTypeface(android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD));
             background = loadBackground();
             newGame();
@@ -97,7 +97,7 @@ public class MainActivity extends Activity {
                 in.close();
                 byte[] decoded = Base64.decode(out.toByteArray(), Base64.DEFAULT);
                 return BitmapFactory.decodeByteArray(decoded, 0, decoded.length);
-            } catch (Exception ignored) {
+            } catch (Throwable ignored) {
                 return null;
             }
         }
@@ -128,6 +128,7 @@ public class MainActivity extends Activity {
         @Override
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
+            try {
             drawBackground(canvas);
             float width = getWidth();
             float topSafe = dp(18);
@@ -202,6 +203,16 @@ public class MainActivity extends Activity {
             paint.setShader(null);
 
             if (gameOver) drawGameOver(canvas);
+            } catch (Throwable error) {
+                paint.setShader(null);
+                paint.clearShadowLayer();
+                canvas.drawColor(0xFFFFE1ED);
+                text.setTextAlign(Paint.Align.CENTER);
+                text.setColor(0xFF5A2F7F);
+                text.setTextSize(sp(18));
+                canvas.drawText("Oyun ekrani guvenli modda",
+                        getWidth() / 2f, getHeight() / 2f, text);
+            }
         }
 
         private void drawBackground(Canvas canvas) {
