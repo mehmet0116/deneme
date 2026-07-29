@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,6 +29,17 @@ jobs:
 
       - name: Build debug APK
         run: gradle assembleDebug --no-daemon
+
+      - name: Copy APK to repo folder
+        run: |
+          mkdir -p apk
+          cp app/build/outputs/apk/debug/app-debug.apk apk/codex-apk-test-debug.apk
+
+      - name: Commit APK into repository
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Add built debug APK
+          file_pattern: apk/codex-apk-test-debug.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
